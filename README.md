@@ -12,3 +12,7 @@ Discord chálky
 - idealne si to prepni z public na private bota
 - musis si vyrobit vlastni oauth2 odkaz i guess
 - pak dej do souboru `.env`
+
+## Obecne
+
+- .dist soubory si nakopiruj bez .dist
