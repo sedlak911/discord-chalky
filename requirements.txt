@@ -1,0 +1,6 @@
+discord.py
+openai
+pillow
+audioop-lts
+requests
+python-dotenv
