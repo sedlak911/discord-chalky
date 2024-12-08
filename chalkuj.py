@@ -22,9 +22,8 @@ SYSTEM_ROLE = (
     "Obcas pouzijes reverzní osmóza jako pojmenovani bud neceho negativniho nebo jako univerzalni pojmenovani. "
     "Hlavni hodnoceni je zdravi jidla: 1-10, pis to jako napr (X/10) abych regexem mohl vytahovat hodnoceni. 10 je nejlepsi."
     "Taky reknes kolik ma dane jidlo kalorii, bilkovin, tuku a cukru. "
-    "Nezapominas pouzivat spravne gen-z vyrazy a at jsou tve odpovedi poradne funny pls. "
-    "Delas si i srandu z vzhledu lidi a jejich situaci na fotografiich pokud tam jsou, pripadne kde jsou atd. "
-    "Rad se uzivateli vysmivas, pouzivat emoji je super volba. Delas i vtipu o sexu, takovy mladezi nepristupne."
+    "Nezapominas pouzivat spravne gen-z vyrazy a at jsou tve odpovedi poradne ofenzivne funny pls. "
+    "Hodne si delas srandu ze situaci na fotkach, pripadne z lidi, pokud tam jsou, hlavne narazky na vzhled. "
 )
 
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -86,7 +85,7 @@ async def billing(ctx):
     message = "**Tolik penez me stojite zmrdi:**\n"
     sum = 0
     for user_id, ratings in user_ratings.items():
-        user_cost = len(ratings) * 0.02
+        user_cost = len(ratings) * 0.005
         user = bot.get_user(int(user_id))
         message += f"{user.name if user else user_id}: {user_cost:.2f} USD\n"
         sum += user_cost
@@ -96,6 +95,9 @@ async def billing(ctx):
 
 @bot.command(name="chalka")
 async def chalka(ctx, *, description: str = None):
+    user_id = str(ctx.author.id)
+    user_name = bot.get_user(int(user_id))
+
     if not ctx.message.attachments:
         await ctx.send("Neposlals obrázek zmrde.")
         return
@@ -107,9 +109,12 @@ async def chalka(ctx, *, description: str = None):
 
     food_description = f"Popis jídla: {description}\n" if description else ""
 
+    print(f"Nova chalka! Od: {user_name}")
+    print(f"{attachment.url}")
+
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",  # gpt-4o, gpt-4o-mini
             messages=[
                 {
                     "role": "system",
@@ -132,6 +137,7 @@ async def chalka(ctx, *, description: str = None):
         )
 
         description_result = response.choices[0].message.content
+
         rating_match = re.search(r"\((\d+)/10\)", description_result)
 
         if rating_match:
@@ -139,7 +145,6 @@ async def chalka(ctx, *, description: str = None):
             rating = float(rating_match.group(1))
 
             # Uložení hodnocení pro uživatele
-            user_id = str(ctx.author.id)
             if user_id not in user_ratings:
                 user_ratings[user_id] = []
 
@@ -150,8 +155,7 @@ async def chalka(ctx, *, description: str = None):
 
             save_ratings()
 
-            # Tagnutí uživatele a připojení průměrného hodnocení
-            await ctx.send(
+            message = (
                 f"{ctx.author.mention}\n\n"
                 f"**Chalkybot hodnoceni:**\n"
                 f"{description_result}\n\n"
@@ -159,7 +163,10 @@ async def chalka(ctx, *, description: str = None):
                 f"**Avg rating:** {avg_rating:.2f}"
             )
         else:
-            await ctx.send(f"**Nenaslo to rating.** Chalkabot hodnoceni:\n\n{description_result}")
+            message = f"**Nenaslo to rating.** Chalkabot hodnoceni:\n\n{description_result}"
+
+        print(f"{message}")
+        await ctx.send(message)
 
     except RateLimitError:
         await ctx.send(f"**Pice, ujebali ste mi limit chatgpt.**")
